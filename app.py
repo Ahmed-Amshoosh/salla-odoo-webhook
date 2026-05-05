@@ -3,53 +3,42 @@ import xmlrpc.client
 
 app = Flask(__name__)
 
-# Odoo connection
-url = "https://azmparts.odoo.com/odoo"
+url = "https://azmparts.odoo.com"
 db = "azmparts"
 username = "amshoosh2@gmail.com"
-password = "772913602"
+password = "YOUR_API_KEY"
 
-common = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common")
-uid = common.authenticate(db, username, password, None)
-
+common = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common", allow_none=True)
 models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
 
+uid = common.authenticate(db, username, password, {})
 
-@app.route('/')
+@app.route("/")
 def home():
 
-    # جلب المنتجات
     products = models.execute_kw(
         db, uid, password,
-        'product.template',
-        'search_read',
-        [[['sale_ok', '=', True]]],
-        {'fields': ['id', 'name', 'list_price'], 'limit': 20}
+        "product.template",
+        "search_read",
+        [[["sale_ok", "=", True]]],
+        {"fields": ["id", "name", "list_price"], "limit": 20}
     )
 
-    # HTML بسيط لعرض البيانات
     html = """
-    <h1>📦 Odoo Products</h1>
-    <table border="1" cellpadding="10">
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Price</th>
-        </tr>
+    <h1>Odoo Products</h1>
+    <ul>
+    {% for p in products %}
+        <li>{{p.name}} - {{p.list_price}}</li>
+    {% endfor %}
+    </ul>
     """
 
-    for p in products:
-        html += f"""
-        <tr>
-            <td>{p['id']}</td>
-            <td>{p['name']}</td>
-            <td>{p['list_price']}</td>
-        </tr>
-        """
+    return render_template_string(html, products=products)
 
-    html += "</table>"
 
-    return render_template_string(html)
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":
