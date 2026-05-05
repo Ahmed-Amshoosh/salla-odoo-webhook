@@ -10,7 +10,7 @@ username = "amshoosh2@gmail.com"
 password = "772913602"
 
 common = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common")
-uid = common.authenticate(db, username, password, {})
+uid = common.authenticate(db, username, password, None)
 
 models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
 
