@@ -13,8 +13,6 @@ models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object", allow_none=True)
 
 uid = common.authenticate(db, username, password, {})
 
-BASE_URL = "https://azmparts.odoo.com"
-
 @app.route("/")
 def home():
 
@@ -23,6 +21,7 @@ def home():
         "name",
         "default_code",
         "list_price",
+        "image_1920"
     ]
 
     products = models.execute_kw(
@@ -33,19 +32,25 @@ def home():
         {"fields": fields, "limit": 20}
     )
 
-    # نضيف رابط الصورة لكل منتج
+    # نحول الصورة إلى رابط سلة تفهمه
     for p in products:
-        p["image_url"] = f"{BASE_URL}/web/image/product.template/{p['id']}/image_1920"
+        if p.get("image_1920"):
+            p["image_url"] = f"{url}/web/image/product.template/{p['id']}/image_1920"
+        else:
+            p["image_url"] = ""
 
     html = """
-    <h1>Products with Images</h1>
+    <h1>Products</h1>
 
     {% for p in products %}
         <div style="margin-bottom:20px">
-            <img src="{{p.image_url}}" width="120"><br>
-            <b>{{p.name}}</b><br>
-            SKU: {{p.default_code}}<br>
-            Price: {{p.list_price}}
+            <h3>{{p.name}}</h3>
+            <p>SKU: {{p.default_code}}</p>
+            <p>Price: {{p.list_price}}</p>
+
+            {% if p.image_url %}
+                <img src="{{p.image_url}}" width="120"/>
+            {% endif %}
         </div>
     {% endfor %}
     """
@@ -53,7 +58,7 @@ def home():
     return render_template_string(html, products=products)
 
 
-@app.route("/webhook", methods=["POST"])
+@app.route("/webhook", methods=["POST", "GET"])
 def webhook():
     return {"status": "ok"}
 
