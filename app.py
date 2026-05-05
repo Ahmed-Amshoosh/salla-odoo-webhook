@@ -1,54 +1,23 @@
-from flask import Flask, request, jsonify
+import xmlrpc.client
 
-app = Flask(__name__)
+url = "https://azmparts.odoo.com/odoo"
+db = "azmparts"
+username = "amshoosh2@gmail.com"
+password = "772913602"
 
-@app.route('/webhook', methods=['GET', 'POST'])
-def webhook():
-    
-    # لو GET (فتح من المتصفح)
-    if request.method == 'GET':
-        return "Webhook is working ✅ (Send POST from Salla)", 200
+# login
+common = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common")
+uid = common.authenticate(db, username, password, {})
 
-    # لو POST (هذا المهم من سلة)
-    data = request.get_json(silent=True)
+models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
 
-    if not data:
-        data = request.form.to_dict()
+# جلب المنتجات
+products = models.execute_kw(
+    db, uid, password,
+    'product.template',
+    'search_read',
+    [[['sale_ok', '=', True]]],
+    {'fields': ['id', 'name', 'list_price'], 'limit': 10}
+)
 
-    print("🔥 RAW WEBHOOK DATA:")
-    print(data)
-
-    event = data.get("event")
-
-    # 🔑 أهم حدث بالبداية (عشان تاخذ access_token)
-    if event == "app.store.authorize":
-        token = data.get("data", {}).get("access_token")
-        print("🔐 ACCESS TOKEN:", token)
-
-    # 📦 عند إنشاء منتج
-    elif event == "product.created":
-        product = data.get("data", {})
-
-        print("📦 New Product Received")
-        print("Name:", product.get("name"))
-        print("SKU:", product.get("sku"))
-
-        price = product.get("price", {})
-        if isinstance(price, dict):
-            print("Price:", price.get("amount"))
-        else:
-            print("Price:", price)
-
-    else:
-        print("⚠️ Event not handled:", event)
-
-    return jsonify({"status": "ok"}), 200
-
-
-@app.route('/')
-def home():
-    return "Salla-Odoo Server Running 🚀"
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+print(products)
