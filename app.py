@@ -6,7 +6,7 @@ app = Flask(__name__)
 url = "https://azmparts.odoo.com"
 db = "azmparts"
 username = "amshoosh2@gmail.com"
-password = "YOUR_API_KEY"
+password = "772913602"
 
 common = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/common", allow_none=True)
 models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
