@@ -21,7 +21,7 @@ def home():
         "product.template",
         "search_read",
         [[["sale_ok", "=", True]]],
-        {"fields": ["id", "name", "list_price"], "limit": 20}
+        {"fields": ["id", "name", "list_price"], "limit": 40}
     )
 
     html = """
