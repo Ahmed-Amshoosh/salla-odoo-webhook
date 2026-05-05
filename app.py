@@ -1,6 +1,5 @@
 from flask import Flask, render_template_string
 import xmlrpc.client
-import base64
 
 app = Flask(__name__)
 
@@ -14,6 +13,8 @@ models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object", allow_none=True)
 
 uid = common.authenticate(db, username, password, {})
 
+BASE_URL = "https://azmparts.odoo.com"
+
 @app.route("/")
 def home():
 
@@ -21,11 +22,7 @@ def home():
         "id",
         "name",
         "default_code",
-        "barcode",
         "list_price",
-        "description_sale",
-        "image_1920",
-        "categ_id"
     ]
 
     products = models.execute_kw(
@@ -36,23 +33,27 @@ def home():
         {"fields": fields, "limit": 20}
     )
 
+    # نضيف رابط الصورة لكل منتج
+    for p in products:
+        p["image_url"] = f"{BASE_URL}/web/image/product.template/{p['id']}/image_1920"
+
     html = """
-    <h1>Products from Odoo</h1>
-    <ul>
+    <h1>Products with Images</h1>
+
     {% for p in products %}
-        <li>
+        <div style="margin-bottom:20px">
+            <img src="{{p.image_url}}" width="120"><br>
             <b>{{p.name}}</b><br>
             SKU: {{p.default_code}}<br>
             Price: {{p.list_price}}
-        </li>
+        </div>
     {% endfor %}
-    </ul>
     """
 
     return render_template_string(html, products=products)
 
 
-@app.route("/webhook", methods=["POST", "GET"])
+@app.route("/webhook", methods=["POST"])
 def webhook():
     return {"status": "ok"}
 
