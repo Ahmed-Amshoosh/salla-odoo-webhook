@@ -4,25 +4,37 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.json
+    data = request.get_json(silent=True)
 
-    if data.get("event") == "product.created":
+    # fallback لو JSON فشل
+    if not data:
+        data = request.form.to_dict()
 
-        product = data["data"]
+    print("🔥 RAW WEBHOOK DATA:")
+    print(data)
+
+    event = data.get("event")
+
+    if event == "product.created":
+        product = data.get("data", {})
 
         print("📦 New Product Received")
-        print("Name:", product["name"])
-        print("SKU:", product["sku"])
-        print("Price:", product["price"]["amount"])
+        print("Name:", product.get("name"))
+        print("SKU:", product.get("sku"))
+        
+        price = product.get("price", {})
+        if isinstance(price, dict):
+            print("Price:", price.get("amount"))
+        else:
+            print("Price:", price)
 
-        # هنا لاحقًا نرسله إلى Odoo
-        # send_to_odoo(product)
+    return jsonify({"status": "ok"}), 200
 
-    return jsonify({"status": "ok"})
 
 @app.route('/')
 def home():
     return "Salla-Odoo Server Running 🚀"
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
